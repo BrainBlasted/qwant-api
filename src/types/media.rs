@@ -1,4 +1,4 @@
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Media {
     pub url: String,
     pub width: u64,

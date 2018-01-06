@@ -23,16 +23,19 @@ pub enum SearchType {
     Music
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize,Clone)]
 /// Type that holds the status of the query
 /// and all the data from it. A failed query
 /// will return null for Data.
-pub struct Response {
+pub struct APIResponse {
     pub status: String,
     pub data: Option<Data>,
+    #[serde(skip_deserializing)]
+    pub search_str: Option<String>,
+    pub offset: Option<u64>
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize,Clone)]
 /// The Data type changes based on whether or not
 /// an error is received. When all goes well, you
 /// get query, cache, and result. Otherwise, you
@@ -45,7 +48,7 @@ pub struct Data {
     pub error_code: Option<u32>
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize,Clone)]
 pub struct Cache {
     pub key: String,
     pub created: u64,
@@ -54,7 +57,7 @@ pub struct Cache {
     pub age: u64,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize,Clone)]
 /// Struct representing the "query" field of Data.
 pub struct Query {
     /// A valid locale string, e.g. "en_US"
@@ -64,7 +67,7 @@ pub struct Query {
     pub offset: u32,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize,Clone)]
 pub struct QwantResult {
     pub items: Vec<Item>,
     pub filters: Filters,
@@ -73,7 +76,7 @@ pub struct QwantResult {
     pub last: Option<bool>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize,Clone)]
 // mutable so that html can be stripped
 pub struct Item {
     pub title: String,
@@ -103,14 +106,14 @@ pub struct Item {
     pub media_: Option<Vec<Media>>
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize,Clone)]
 pub struct Filters {
     pub freshness: Freshness,
     pub size: Option<Size>,
     pub license: Option<License>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize,Clone)]
 pub struct Size {
     pub label: String,
     pub name: String,
@@ -120,7 +123,7 @@ pub struct Size {
     pub values: Vec<Values>
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize,Clone)]
 pub struct License {
     pub label: String,
     pub name: String,
@@ -130,7 +133,7 @@ pub struct License {
     pub values: Vec<Values>
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize,Clone)]
 pub struct Freshness {
     pub label: String,
     pub name: String,
@@ -140,19 +143,19 @@ pub struct Freshness {
     pub values: Vec<Values>
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize,Clone)]
 pub struct Values {
     pub value: String,
     pub label: String,
     pub translate: bool,
 }
 
-impl Response {
+impl APIResponse {
     // TODO: Make this return a Result type rather than assuming nothing fails.
     /// Returns the Response struct from the search. Takes a valid locale string,
     /// like "en_US", an app id string, the string to search for, and a boolean
     /// value to determine seaarch result safety.
-    pub fn new(query: &String, type_: &SearchType, safe: bool, locale: &String, id: &String) -> Response {
+    pub fn new(query: &String, type_: &SearchType, safe: bool, locale: &String, id: &String) -> APIResponse {
         let type_str: &str = match type_ {
             &SearchType::Web => "web",
             &SearchType::Images => "images",
@@ -177,9 +180,20 @@ impl Response {
         let mut req = reqwest::get(search_str.as_str()).expect("request JSON from API");
         // TODO: Figure out forwarding the error rather than
         // using unwrap().
-        let resp: Response = serde_json::from_str(&req.text().unwrap()).unwrap();
+        let mut resp: APIResponse = serde_json::from_str(&req.text().unwrap()).unwrap();
+        resp.search_str = Some(search_str);
+        // Offset is always at 0;
+        resp.offset = Some(0);
         resp
     }
+
+    pub fn next_page(&mut self) {
+        let search_str = self.clone().search_str.unwrap() + &format!("&offset={}", (self.offset.unwrap() + 10));
+        let mut req = reqwest::get(search_str.as_str()).expect("request JSON from API");
+        let resp: APIResponse = serde_json::from_str(&req.text().unwrap()).unwrap();
+        self.data = resp.data;
+    }
+
 }
 
 impl Item {
