@@ -198,11 +198,12 @@ impl APIResponse {
 
 impl Item {
     /// Uses regex to strip <b></b> tags
-    // TODO: Figure out how to strip from
-    // Option<T> fields
     pub fn strip_html(&mut self) {
         let re = Regex::new(r"<(.|\n)*?>").unwrap();
         self.title = re.replace_all(&self.title, "").escape_default();
         self.desc = re.replace_all(&self.desc, "").escape_default();
+        if self.desc_short.is_some() {
+            self.desc_short = Some(re.replace_all(&self.clone().desc_short.unwrap(), "").escape_default());
+        }
     }
 }
