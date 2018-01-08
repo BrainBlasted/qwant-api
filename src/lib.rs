@@ -32,7 +32,6 @@ pub struct APIResponse {
     pub data: Option<Data>,
     #[serde(skip_deserializing)]
     pub search_str: Option<String>,
-    pub offset: Option<u64>
 }
 
 #[derive(Deserialize,Clone)]
@@ -194,13 +193,12 @@ impl APIResponse {
         // using unwrap().
         let mut resp: APIResponse = serde_json::from_str(&req.text().unwrap()).unwrap();
         resp.search_str = Some(search_str);
-        // Offset is always at 0;
-        resp.offset = Some(0);
         Some(resp)
     }
 
     pub fn next_page(&mut self) {
-        let search_str = self.clone().search_str.unwrap() + &format!("&offset={}", (self.offset.unwrap() + 10));
+        let offset = self.clone().data.unwrap().query.unwrap().offset;
+        let search_str = self.clone().search_str.unwrap() + &format!("&offset={}", (offset + 10));
         let mut req = reqwest::get(search_str.as_str()).expect("request JSON from API");
         let resp: APIResponse = serde_json::from_str(&req.text().unwrap()).unwrap();
         self.data = resp.data;
