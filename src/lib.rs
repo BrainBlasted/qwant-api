@@ -155,7 +155,7 @@ impl APIResponse {
     /// Returns the Response struct from the search. Takes a valid locale string,
     /// like "en_US", an app id string, the string to search for, and a boolean
     /// value to determine seaarch result safety.
-    pub fn new(query: &String, type_: &SearchType, safe: bool, locale: &String, id: &String) -> APIResponse {
+    pub fn new(query: &String, type_: &SearchType, safe: bool, locale: &String, id: &String) -> Option<APIResponse> {
         let type_str: &str = match type_ {
             &SearchType::Web => "web",
             &SearchType::Images => "images",
@@ -176,15 +176,27 @@ impl APIResponse {
                     query,
                     id);
 
-        // TODO: Handle request failures differently.
-        let mut req = reqwest::get(search_str.as_str()).expect("request JSON from API");
+        let req = match reqwest::get(search_str.as_str()) {
+            Ok(req) => Some(req),
+            Err(e) => {
+                println!("Failed to request JSON from API");
+                println!("{:?}", e);
+                None
+            }
+        };
+
+        if req.is_none() {
+            return None
+        }
+
+        let mut req = req.unwrap();
         // TODO: Figure out forwarding the error rather than
         // using unwrap().
         let mut resp: APIResponse = serde_json::from_str(&req.text().unwrap()).unwrap();
         resp.search_str = Some(search_str);
         // Offset is always at 0;
         resp.offset = Some(0);
-        resp
+        Some(resp)
     }
 
     pub fn next_page(&mut self) {
