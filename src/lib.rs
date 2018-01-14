@@ -154,14 +154,14 @@ impl APIResponse {
     /// Returns the Response struct from the search. Takes a valid locale string,
     /// like "en_US", an app id string, the string to search for, and a boolean
     /// value to determine seaarch result safety.
-    pub fn new(query: &String, type_: &SearchType, safe: bool, locale: &String, id: &String) -> Option<APIResponse> {
-        let type_str: &str = match type_ {
-            &SearchType::Web => "web",
-            &SearchType::Images => "images",
-            &SearchType::Music => "music",
-            &SearchType::Shopping => "shopping",
-            &SearchType::Videos => "videos",
-            &SearchType::News => "news"
+    pub fn new(query: &str, type_: &SearchType, safe: bool, locale: &str, id: &str) -> Option<APIResponse> {
+        let type_str: &str = match *type_ {
+            SearchType::Web => "web",
+            SearchType::Images => "images",
+            SearchType::Music => "music",
+            SearchType::Shopping => "shopping",
+            SearchType::Videos => "videos",
+            SearchType::News => "news"
         };
 
         let safe_search = if safe {1} else {0};
