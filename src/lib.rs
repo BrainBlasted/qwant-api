@@ -9,6 +9,8 @@ extern crate serde_json;
 
 pub mod types;
 
+use std::str::FromStr;
+
 use types::media::Media;
 
 use regex::Regex;
@@ -63,6 +65,7 @@ pub struct Query {
     pub locale: String,
     /// String to search for
     pub query: String,
+    /// Offset of search results
     pub offset: u32,
 }
 
@@ -196,10 +199,17 @@ impl APIResponse {
         Some(resp)
     }
 
-    pub fn next_page(&mut self) {
-        let offset = self.clone().data.unwrap().query.unwrap().offset;
-        let search_str = self.clone().search_str.unwrap() + &format!("&offset={}", (offset + 10));
-        let mut req = reqwest::get(search_str.as_str()).expect("request JSON from API");
+    pub fn next_page(mut self) {
+        let offset = &self.data.unwrap().query.unwrap().offset;
+        let search_str = self.search_str.unwrap();
+        let re = Regex::new(r"(?:&offset=^\d$)").unwrap();
+
+        let new_search = {
+            re.replace_all(&search_str, "").escape_default();
+            search_str + &String::from_str(&format!("&offset={}", (offset + 10))).unwrap()
+        };
+
+        let mut req = reqwest::get(new_search.as_str()).expect("request JSON from API");
         let resp: APIResponse = serde_json::from_str(&req.text().unwrap()).unwrap();
         self.data = resp.data;
     }
