@@ -212,6 +212,16 @@ impl APIResponse {
 
         let mut req = reqwest::get(new_search.clone().as_str()).expect("request JSON from API");
         let mut resp: APIResponse = serde_json::from_str(&req.text().unwrap()).unwrap();
+        resp.data = Some(Data {
+            cache: resp.clone().data.unwrap().cache,
+            error_code: resp.clone().data.unwrap().error_code,
+            query: Some(Query {
+                locale: resp.clone().data.unwrap().query.unwrap().locale,
+                offset: offset + 10,
+                query: resp.clone().data.unwrap().query.unwrap().query,
+            }),
+            result: resp.clone().data.unwrap().result,
+        });
         resp.search_str = Some(new_search);
         resp
     }
