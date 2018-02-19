@@ -210,9 +210,9 @@ impl APIResponse {
             search_str.clone() + &String::from_str(&format!("&offset={}", (offset + 10))).unwrap()
         };
 
-        let mut req = reqwest::get(new_search.as_str()).expect("request JSON from API");
+        let mut req = reqwest::get(new_search.clone().as_str()).expect("request JSON from API");
         let mut resp: APIResponse = serde_json::from_str(&req.text().unwrap()).unwrap();
-        resp.search_str = Some(search_str);
+        resp.search_str = Some(new_search);
         resp
     }
 
