@@ -199,9 +199,10 @@ impl APIResponse {
         Some(resp)
     }
 
-    pub fn next_page(mut self) {
-        let offset = &self.data.unwrap().query.unwrap().offset;
-        let search_str = self.search_str.unwrap();
+    pub fn next_page(&mut self) {
+        let s = self.clone();
+        let offset = &s.data.unwrap().query.unwrap().offset;
+        let search_str = s.search_str.unwrap();
         let re = Regex::new(r"(?:&offset=^\d$)").unwrap();
 
         let new_search = {
