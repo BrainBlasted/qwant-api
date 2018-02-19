@@ -207,11 +207,12 @@ impl APIResponse {
 
         let new_search = {
             re.replace_all(&search_str, "").escape_default();
-            search_str + &String::from_str(&format!("&offset={}", (offset + 10))).unwrap()
+            search_str.clone() + &String::from_str(&format!("&offset={}", (offset + 10))).unwrap()
         };
 
         let mut req = reqwest::get(new_search.as_str()).expect("request JSON from API");
-        let resp: APIResponse = serde_json::from_str(&req.text().unwrap()).unwrap();
+        let mut resp: APIResponse = serde_json::from_str(&req.text().unwrap()).unwrap();
+        resp.search_str = Some(search_str);
         resp
     }
 
