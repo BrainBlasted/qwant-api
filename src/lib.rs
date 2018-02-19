@@ -199,7 +199,7 @@ impl APIResponse {
         Some(resp)
     }
 
-    pub fn next_page(&mut self) {
+    pub fn next_page(self) -> Self {
         let s = self.clone();
         let offset = &s.data.unwrap().query.unwrap().offset;
         let search_str = s.search_str.unwrap();
@@ -212,7 +212,7 @@ impl APIResponse {
 
         let mut req = reqwest::get(new_search.as_str()).expect("request JSON from API");
         let resp: APIResponse = serde_json::from_str(&req.text().unwrap()).unwrap();
-        self.data = resp.data;
+        resp
     }
 
 }
